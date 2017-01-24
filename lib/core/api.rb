@@ -18,6 +18,8 @@ class Slapi < Sinatra::Application
 
     @client = Slack::Web::Client.new
     @client.auth_test
+
+    @brain = Redis.new
   end
 
   # Handles a POST request for '/reload'
@@ -117,5 +119,26 @@ class Slapi < Sinatra::Application
                              as_user: params[:as_user] ? params[:as_user] : true)
     logger.debug('posted to room')
     { 'message' => 'yes, it worked' }.to_json
+  end
+
+  post '/v1/save' do
+    raise 'missing plugin name' unless params[:plugin]
+    raise 'missing key' unless params[:key]
+    raise 'missing value' unless params[:value]
+
+    logger.debug('Saving data to brain')
+    # Saves into brain as Plugin: key, value
+    @brain.hmset(params[:plugin], params[:key], params[:value])
+    logger.debug('Data saved to brain')
+  end
+
+  get '/v1/query' do
+    raise 'missing plugin name' unless params[:plugin]
+    raise 'missing key' unless params[:key]
+
+    logger.debug('Getting data from brain')
+    # Searches brain via Plugin: key,
+    @brain.hmget(params[:plugin], params[:key])
+    logger.debug('Data retrieved from brain')
   end
 end

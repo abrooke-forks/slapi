@@ -38,7 +38,6 @@ class Slapi < Sinatra::Application
   # logger.debug "current environment is set to: #{settings.environment}"
   # TODO: also set up log to write to log file
   puts "current environment is set to: #{settings.environment}"
-
   @realtime = RealTimeClient.new(settings)
   @realtime.run_bot
 end
