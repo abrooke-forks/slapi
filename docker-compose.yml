@@ -18,7 +18,7 @@ services:
     environment:
         # Add the dind_host to the /etc/hosts file, docker is set below
         DOCKER_URL: 'docker:2375'
-        BRAIN_URL: 'redis://brain:6379'
+        REDIS_URL: 'redis://brain:6379'
     volumes:
         - scripts:/usr/src/slapi/scripts:rw
         - ./config:/usr/src/slapi/config/

@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 require 'json'
 require 'logger'
+require 'redis'
 require 'slack-ruby-client'
 
 # SLAPI class is for the web API to interact with Slack
@@ -15,10 +16,8 @@ class Slapi < Sinatra::Application
       config.token = settings.adapter['token']
       raise 'Missing Slack Token configuration!' unless config.token
     end
-
     @client = Slack::Web::Client.new
     @client.auth_test
-
     @brain = Redis.new
   end
 
@@ -133,12 +132,13 @@ class Slapi < Sinatra::Application
   end
 
   get '/v1/query' do
-    raise 'missing plugin name' unless params[:plugin]
-    raise 'missing key' unless params[:key]
+    raise 'missing plugin name' unless env['HTTP_PLUGIN']
+    raise 'missing key' unless env['HTTP_KEY']
 
     logger.debug('Getting data from brain')
     # Searches brain via Plugin: key,
-    @brain.hmget(params[:plugin], params[:key])
+    data_return = @brain.hmget(env['HTTP_PLUGIN'], env['HTTP_KEY'])
     logger.debug('Data retrieved from brain')
+    return data_return
   end
 end

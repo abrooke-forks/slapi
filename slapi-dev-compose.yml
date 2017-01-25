@@ -17,6 +17,7 @@ services:
     command: bundle exec rdebug-ide --host 0.0.0.0 --port 1234 -- /usr/local/bundle/bin/rackup --host 0.0.0.0 -p 4567
     environment:
         DOCKER_URL: 'docker:2375'
+        REDIS_URL: 'redis://brain:6379'
     volumes:
         - scripts:/usr/src/slapi/scripts:rw
         - ./config:/usr/src/slapi/config/
@@ -25,17 +26,19 @@ services:
             ipv4_address: 172.16.238.3
     extra_hosts:
         - "docker:172.16.238.2"
+        - "brain:172.16.238.4"
     depends_on:
         - dind_host
-        # - brain
-#   brain:
-#     image: postgres
-#     ports:
-#     networks:
-#         - slapi-net
-#             ipv4_address: 172.16.238.4
-#     depends_on:
-#         - dind_host
+        - brain
+  brain:
+    image: redis:3-alpine
+    ports:
+        - "6379:6379"
+    networks:
+        slapi-net:
+            ipv4_address: 172.16.238.4
+    depends_on:
+        - dind_host
 
 volumes:
   scripts:

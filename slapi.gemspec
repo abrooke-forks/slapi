@@ -23,6 +23,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency 'rest-client', '~> 1.8'
   spec.add_dependency 'docker-api', '~> 1.31.0'
   spec.add_dependency 'sinatra'
+  spec.add_dependency 'redis'
   spec.add_dependency 'sinatra-contrib'
   spec.add_dependency 'slack-ruby-client'
   spec.add_dependency 'unicorn'
