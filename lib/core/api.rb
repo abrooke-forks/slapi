@@ -3,22 +3,21 @@ require 'json'
 require 'logger'
 require 'redis'
 require 'slack-ruby-client'
+# require_relative 'brain'
 
-# SLAPI class is for the web API to interact with Slack
+# API class is for the web API to interact with Slack
 #
 # == Ruby Slack Client
 # The ruby Slack client will be used to connect and post into Slack
 # @see https://github.com/slack-ruby/slack-ruby-client
-class Slapi < Sinatra::Application
-  def initialize
-    super()
+class Slapi
+  def initialize(settings)
     Slack.configure do |config|
       config.token = settings.adapter['token']
       raise 'Missing Slack Token configuration!' unless config.token
     end
     @client = Slack::Web::Client.new
     @client.auth_test
-    @brain = Redis.new
   end
 
   # Handles a POST request for '/reload'
@@ -27,7 +26,7 @@ class Slapi < Sinatra::Application
     # NOTE: this currently does not work for a running system
     # however breakpoints are not working on server startup.
     # so this helps to test/inspect the load.
-    @realtime = RealTimeClient.new settings
+    # @realtime = RealTimeClient.new settings
     @realtime.update_plugin_cache
   end
 
@@ -127,7 +126,7 @@ class Slapi < Sinatra::Application
 
     logger.debug('Saving data to brain')
     # Saves into brain as Plugin: key, value
-    @brain.hmset(params[:plugin], params[:key], params[:value])
+    @brain.save(params[:plugin], params[:key], params[:value])
     logger.debug('Data saved to brain')
   end
 
@@ -137,7 +136,7 @@ class Slapi < Sinatra::Application
 
     logger.debug('Getting data from brain')
     # Searches brain via Plugin: key,
-    data_return = @brain.hmget(env['HTTP_PLUGIN'], env['HTTP_KEY'])
+    data_return = @brain.query(env['HTTP_PLUGIN'], env['HTTP_KEY'])
     logger.debug('Data retrieved from brain')
     return data_return
   end

@@ -5,6 +5,7 @@ require 'sinatra/config_file'
 require 'json'
 require 'logger'
 require_relative 'lib/core/realtime'
+require_relative 'lib/core/api'
 
 # SLAPI Init
 class Slapi < Sinatra::Application
@@ -38,8 +39,7 @@ class Slapi < Sinatra::Application
   # logger.debug "current environment is set to: #{settings.environment}"
   # TODO: also set up log to write to log file
   puts "current environment is set to: #{settings.environment}"
+  @brain = Brain.new(settings)
   @realtime = RealTimeClient.new(settings)
   @realtime.run_bot
 end
-
-require_relative 'lib/init'
