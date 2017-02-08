@@ -4,8 +4,9 @@ require 'sinatra/base'
 require 'sinatra/config_file'
 require 'json'
 require 'logger'
-require_relative 'lib/core/realtime'
-require_relative 'lib/core/api'
+require 'yaml'
+require 'docker'
+require 'slack-ruby-client'
 
 # SLAPI Init
 class Slapi < Sinatra::Application
@@ -37,9 +38,34 @@ class Slapi < Sinatra::Application
   # http://stackoverflow.com/questions/14463512/how-do-i-access-sinatras-logger-outside-the-request-scope
   # TODO: set up Rack Logger
   # logger.debug "current environment is set to: #{settings.environment}"
-  # TODO: also set up log to write to log file
-  puts "current environment is set to: #{settings.environment}"
-  @brain = Brain.new(settings)
-  @realtime = RealTimeClient.new(settings)
+  # TODO: also set up log to write to log fil
+  puts "Current environment is set to: #{settings.environment}"
+
+  Slack.configure do |config|
+    config.token = settings.adapter['token']
+    raise 'Missing Slack Token configuration!' unless config.token
+  end
+
+  @bot_name = settings.bot['name']
+  @bot_options = settings.bot || {}
+  @help_options = settings.help || {}
+  @admin_options = settings.admin || {}
+
+  # Create
+  @client = Slack::RealTime::Client.new
+
+  # Load rest of bot
+  require_relative 'lib/init'
+
+  # Set botname based on settings or client name
+  def bot_name
+    @bot_name = @bot_options['name'] || @client.self.name
+  end
+
+  # Setup brain connection
+  @brain = Brain.new
+
+  # Setup Realtime Listener
+  @realtime = ClientBase.new
   @realtime.run_bot
 end
