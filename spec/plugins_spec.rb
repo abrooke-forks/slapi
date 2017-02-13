@@ -45,7 +45,7 @@ RSpec.describe Plugins, "#exec" do
         plugins = Plugins.new(settings)
         test_data = MockData.new({})
         
-        expect(plugins.help(test_data)).to eq("admin_list\npager\n")
+        expect(plugins.help(test_data)).to eq("hello\npager\n")
       end
     end
 
@@ -55,7 +55,8 @@ RSpec.describe Plugins, "#exec" do
         plugins = Plugins.new(settings)
         test_data = MockData.new({})
         
-        expect(plugins.help(test_data)).to eq("admin_list:
+        expect(plugins.help(test_data)).to eq("hello:
+    hello world : Says things
 pager:
     ack : acknowledge incident
     create : create items

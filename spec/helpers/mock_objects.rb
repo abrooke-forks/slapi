@@ -1,11 +1,12 @@
 #TODO: there is likely a cleaner way to do the dependency injection than this but these PORO's work
 class MockSettings
-  attr_accessor :help, :admin, :adapter, :bot
+  attr_accessor :help, :admin, :adapter, :bot, :plugins
   def initialize(data)
     @help = data[:help] || {'level' => 1}
     @admin = data[:admin] || nil
     @adapter = data[:adapter] ? data[:adapter] : {'token' => 'abc123'}
     @bot = data[:bot] ? data[:bot] : {'name' => 'headroom'}
+    @plugins = data[:plugins] ? data[:plugins] : {'location' => '../../spec/fixtures/plugins/*.yml'}
   end
 end
 
