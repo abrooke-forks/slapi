@@ -2,6 +2,8 @@
 # require 'yaml'
 require_relative 'plugin'
 
+# Extends Slapi Module
+# module Slapi
 # Plugins class will act as a cache of the plugins currently loaded.
 # It's two main functions are to:
 #  1. Load the configuration of all plugins
@@ -12,7 +14,7 @@ class Plugins
 
   def initialize(settings)
     @help_options = settings.help || {}
-    @admin_options = settings.admin || {}
+    # @admin_options = settings.admin || {}
     @plugin_hash = {}
     load
   end
@@ -92,3 +94,4 @@ class Plugins
     # Loop through the list of containers and plugins matching and remove any not connected
   end
 end
+# end

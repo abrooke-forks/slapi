@@ -1,9 +1,7 @@
 # frozen_string_literal: true
-require 'yaml'
-require 'docker'
-require 'httparty'
-require 'json'
 
+# Extends Slapi Module
+# module Slapi
 # Plugin class will represent an individual plugin.
 # It will check the metadata of the type of plugins to make decisions.
 # It's two main functions are to:
@@ -229,14 +227,6 @@ class Plugin
     when 'bash', 'shell'
       lang[:file_type] = '.sh'
       lang[:image] = 'slapi/base:latest'
-    # Future Languages for Script Type
-    # Uncomment when ready for script languages
-    # when 'php'
-    #   lang[:file_type] = '.php' # or is this phar?
-    #   lang[:image] = 'slapi/base:latest'
-    # when 'posh', 'powershell'
-    #   lang[:file_type] = '.ps'
-    #   lang[:image] = 'slapi/base:latest'
     else
       # TODO: error logging for this
       # could also use the langage sent in
@@ -246,3 +236,4 @@ class Plugin
     lang
   end
 end
+# end
