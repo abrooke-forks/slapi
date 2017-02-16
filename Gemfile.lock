@@ -51,6 +51,8 @@ GEM
     celluloid-supervision (0.20.6)
       timers (>= 4.1.1)
     concurrent-ruby (1.0.4)
+    crack (0.4.3)
+      safe_yaml (~> 1.0.0)
     daemons (1.2.4)
     debase (0.2.2.beta10)
       debase-ruby_core_source
@@ -69,6 +71,7 @@ GEM
     faraday_middleware (0.11.0.1)
       faraday (>= 0.7.4, < 1.0)
     gli (2.15.0)
+    hashdiff (0.3.2)
     hashie (3.5.1)
     hitimes (1.2.4)
     http-cookie (1.0.3)
@@ -128,6 +131,7 @@ GEM
     ruby-debug-ide (0.6.1.beta4)
       rake (>= 0.8.1)
     ruby-progressbar (1.8.1)
+    safe_yaml (1.0.4)
     simplecov (0.13.0)
       docile (~> 1.1.0)
       json (>= 1.8, < 3)
@@ -169,6 +173,11 @@ GEM
     unicorn (5.2.0)
       kgio (~> 2.6)
       raindrops (~> 0.7)
+    vcr (3.0.3)
+    webmock (2.3.2)
+      addressable (>= 2.3.6)
+      crack (>= 0.3.2)
+      hashdiff
     websocket-driver (0.6.5)
       websocket-extensions (>= 0.1.0)
     websocket-extensions (0.1.2)
@@ -192,6 +201,8 @@ DEPENDENCIES
   simplecov
   slapi!
   thin
+  vcr
+  webmock
   yard
 
 BUNDLED WITH

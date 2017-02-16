@@ -19,7 +19,17 @@
 # See http://rubydoc.info/gems/rspec-core/RSpec/Core/Configuration
 require_relative "helpers/mock_objects.rb"
 require 'simplecov'
+require 'slack-ruby-client'
 SimpleCov.start
+
+
+Dir[File.join(File.dirname(__FILE__), 'support', '**/*.rb')].each do |file|
+  require file
+end
+
+Slack.configure do |config|
+  config.token = ENV['SLACK_API_TOKEN']
+end
 
 RSpec.configure do |config|
   # rspec-expectations config goes here. You can use an alternate
