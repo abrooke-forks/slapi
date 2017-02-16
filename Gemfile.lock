@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    slapi (0.0.1.alpha)
+    slapi (0.1.0)
       docker-api (~> 1.31.0)
       httparty
       redis

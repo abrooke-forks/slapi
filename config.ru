@@ -1,3 +1,3 @@
 # frozen_string_literal: true
-require './slapi'
-run Bot
+require './lib/slapi'
+run Slapi

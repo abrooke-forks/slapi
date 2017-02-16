@@ -3,32 +3,33 @@ require 'sinatra'
 require 'sinatra/base'
 require 'sinatra/config_file'
 require 'logger'
-require_relative 'lib/routes/plugin'
+require 'json'
+require 'yaml'
+require 'docker'
+require 'redis'
+require 'httparty'
+require 'slack-ruby-client'
 
-## Routes
-# require_relative 'lib/routes/plugin'
-# require_relative 'lib/routes/chat'
-# require_relative 'lib/routes/brain'
+# Routes
+require_relative 'routes/plugin'
+require_relative 'routes/chat'
+require_relative 'routes/brain'
 
-# Slapi Bot Module
-# module Slapi
 # Initial Bot Config
-class Bot < Sinatra::Base
-  def initialize
-    super
-  end
+class Slapi < Sinatra::Base
 
-  require_relative 'lib/init'
+  # Load Extended Class items
+  require_relative 'slapi/init'
 
   set :root, File.dirname(__FILE__)
   register Sinatra::ConfigFile
 
-  config_file 'config/environments.yml'
+  config_file '../config/environments.yml'
 
   if File.file?('config/bot.local.yml')
-    config_file 'config/bot.local.yml'
+    config_file '../config/bot.local.yml'
   elsif File.file?('config/bot.yml')
-    config_file 'config/bot.yml'
+    config_file '../config/bot.yml'
   else
     raise 'No bot config found'
   end
@@ -36,6 +37,10 @@ class Bot < Sinatra::Base
   configure :production, :development, :test do
     enable :logging
   end
+
+  register Sinatra::SlapiRoutes::Plugin
+  register Sinatra::SlapiRoutes::Chat
+  register Sinatra::SlapiRoutes::Brain
 
   # TODO: Log to files?
   @logger = Logger.new(STDOUT)
@@ -46,15 +51,7 @@ class Bot < Sinatra::Base
 
   # set :environment, :production
 
-  @logger.debug "current environment is set to: #{settings.environment}"
-
-  # Setup brain connection
-  @brain = Brain.new(settings)
-  @plugins = Plugins.new(settings)
-
-  def self.reload_plugins
-    @plugins.load
-  end
+  debug_logger("current environment is set to: #{settings.environment}")
 
   @help_options = settings.help || {}
   @admin_options = settings.admin || {}
@@ -68,10 +65,15 @@ class Bot < Sinatra::Base
   @client = Slack::RealTime::Client.new
   @bot_name = settings.bot['name'] || @client.self.name
 
-  register Sinatra::SlapiRoutes::Routing::Plugin
-  # register Sinatra::SlapiRoutes::Routing::Chat
-  # register Sinatra::SlapiRoutes::Routing::Brain
+  # Load Brain
+  # Utilizes helper from helper/brain
+  brain
+
+  # Load Plugins
+  # Utilizes helper from helper/plugins
+  plugins
+
+  # Run Slapi Bot/Slack Client
+  # Utilizes base.rb from client/base
   run
-  # @bot.run
 end
-# end

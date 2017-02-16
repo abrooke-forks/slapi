@@ -1,26 +1,10 @@
 # frozen_string_literal: true
 
-require 'redis'
+# Slapi Brain
+class Slapi
 
-# Extend Slapi Class
-# module Slapi
-# Load Brain and Create Container in DIND Host
-class Brain
-  def initialize(settings)
-    @container = nil
-    @container_info = {}
-    @brain_url = nil
-    @brain_name = 'slapi_brain'
-    # TODO: Log to files?
-    # @logger = Logger.new(STDOUT)
-    # @logger.level = settings.logger_level
-
-    load
-  end
-
-  def load
-    # TODO: Function check for existing brain or delete existing?
-    brain_check(@brain_name)
+  def self.brain
+    brain_check('slapi_brain')
     @image = Docker::Image.create(fromImage: 'redis:3-alpine')
     @container_hash = {
       'name' => 'slapi_brain',
@@ -39,28 +23,14 @@ class Brain
     @container_hash['Labels'] = @image.info['Config']['Labels']
     @container = Docker::Container.create(@container_hash)
     @container.tap(&:start)
-
-    # @redis = Redis.new
-    # puts @redis
+    set_url
+    @redis = Redis.new(url: @brain_url)
   end
 
-  def brain_check(name)
+  def self.brain_check(name)
     container = Docker::Container.get(name)
     container&.delete(force: true) if container
   rescue StandardError => _error
     false
   end
-
-  def query(plugin, key)
-    if @brain_url
-      @redis.hmget(plugin, key)
-    else
-      puts 'Brain not configured'
-    end
-  end
-
-  def save(plugin, key, value)
-    @brain_url ? @redis.hmset(plugin, key, value) : @logger.debug('Brain not configured')
-  end
 end
-# end

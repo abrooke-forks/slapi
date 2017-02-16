@@ -4,8 +4,9 @@ require 'sinatra'
 # Extend Slapi class
 module Sinatra
   module SlapiRoutes
-    module Routing
-      module Chat
+    # Sinatra Extension that adds routes to accces Slapi Chat Client
+    module Chat
+      def self.registered(slapi)
         # Handles a POST request for '/v1/attachment'
         # @see https://api.slack.com/docs/message-attachments Slack Documentation
         # @see https://api.slack.com/docs/messages/builder
@@ -22,7 +23,7 @@ module Sinatra
         # @option attachments [String] :text
         # @option attachments [String] :color ('#7CD197') defaults to green if not specified
         # @return [String] the resulting webpage
-        post '/v1/attachment' do
+        slapi.post '/v1/attachment' do
           raise 'missing channel' unless params[:channel]
           raise 'missing text' unless params[:text]
           raise 'missing fallback' unless params[:attachments][:fallback]
@@ -61,7 +62,7 @@ module Sinatra
         # @option params [String] :channel The Slack Channel ID (Name may work in some instances)
         # @option params [String] :text The text that will be posted in the channel, supports formatting
         # @return [String] the resulting webpage
-        post '/v1/emote' do
+        slapi.post '/v1/emote' do
           raise 'missing channel' unless params[:channel]
           raise 'missing text' unless params[:text]
 
@@ -83,7 +84,7 @@ module Sinatra
         # @option params [String] :text The text that will be posted in the channel, supports formatting
         # @option params [String] :as_user ('true')
         # @return [String] the resulting webpage
-        post '/v1/speak' do
+        slapi.post '/v1/speak' do
           raise 'missing channel' unless params[:channel]
           raise 'missing text' unless params[:text]
 

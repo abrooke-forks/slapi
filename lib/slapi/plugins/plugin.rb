@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-# Extends Slapi Module
-# module Slapi
 # Plugin class will represent an individual plugin.
 # It will check the metadata of the type of plugins to make decisions.
 # It's two main functions are to:
@@ -23,8 +21,7 @@ class Plugin
     @container = nil
     @container_info = {}
     @api_info = {}
-    @container_hash = { 'name' => @name }
-    @help_hash = {}
+    @container_hash = {}
     load
   end
 
@@ -35,6 +32,7 @@ class Plugin
     when 'script'
       @image = Docker::Image.create(fromImage: @lang_settings[:image])
       @container_hash = {
+        'name' => @name,
         'Image' => @lang_settings[:image],
         'HostConfig' => {
           'Binds' => ["#{Dir.pwd}/scripts/#{filename}:/scripts/#{filename}"]
@@ -45,6 +43,7 @@ class Plugin
       @container_hash['Labels'] = @config['plugin']['help']
     when 'container'
       @image = Docker::Image.create(fromImage: @config['plugin']['config']['Image'])
+      @container_hash['name'] = @name
       @container_hash['Entrypoint'] = @image.info['Config']['Entrypoint']
       @container_hash['WorkingDir'] = @image.info['Config']['WorkingDir']
       @container_hash['Labels'] = @image.info['Config']['Labels']

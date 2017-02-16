@@ -6,8 +6,8 @@ require 'rbconfig'
 
 Gem::Specification.new do |spec|
   spec.name          = 'slapi'
-  spec.version       = '0.0.1.alpha'
-  spec.authors       = ['Levi Smith', 'Aaron Blyth']
+  spec.version       = '0.1.0'
+  spec.authors       = ['Levi Smith', 'Aaron Blythe']
   spec.email         = ['atat@hearst.com']
 
   spec.summary       = 'SLAPI Bot, Your Gateway to ChatOps'
