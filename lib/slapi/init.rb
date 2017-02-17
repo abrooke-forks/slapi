@@ -4,10 +4,10 @@
 require_relative 'client/base'
 
 ## Brain
-require_relative 'brain/redis'
+require_relative '../brain/redis'
 
 ## Plugins
-require_relative 'plugins/plugin'
+require_relative '../plugins/plugins'
 
 ## Helpers
 require_relative 'helpers/base'

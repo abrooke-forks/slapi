@@ -63,7 +63,7 @@ class Slapi
       text: 'Plugins are being reloaded, please wait',
       color: '#F7DC6F'
     )
-    load
+    reload_plugins
     chat(
       data,
       title: 'Plugin Reloader',

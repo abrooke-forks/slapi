@@ -66,14 +66,14 @@ class Slapi < Sinatra::Base
   @bot_name = settings.bot['name'] || @client.self.name
 
   # Load Brain
-  # Utilizes helper from helper/brain
-  brain
+  # Utilizes helper from brain/brain
+  @brain = Brain.new
 
   # Load Plugins
-  # Utilizes helper from helper/plugins
-  plugins
+  # Utilizes Library from plugins/plugins
+  @plugins = Plugins.new
 
   # Run Slapi Bot/Slack Client
-  # Utilizes base.rb from client/base
+  # Utilizes Library from client/base
   run
 end
