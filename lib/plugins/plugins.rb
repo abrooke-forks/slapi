@@ -44,6 +44,7 @@ class Plugins
   end
 
   # Routes the execution to the correct plugin if it exists.
+  # TODO: Write plugin check to verify if plugin exists
   def exec(data, requested_plugin = nil)
     plugin_object = plugin_check(requested_plugin)
     plugin_object.exec data
