@@ -75,11 +75,10 @@ class Plugin
   end
 
   def load_api
-    # TODO: Add API Loading Config
-    # @headers = {
-    #   'Content-Type' => @config['plugin']['api']['content_type'],
-    #   'Authorization' => @config['plugin']['api']['auth']
-    # }
+    @headers = {
+      'Content-Type' => @config['plugin']['api']['content_type'],
+      'Authorization' => @config['plugin']['api']['auth']
+    }
   end
 
   # Load the plugin configuration.
@@ -98,16 +97,14 @@ class Plugin
       # load the docker container set in the config
       load_docker
       case @config['plugin']['listen_type']
-      when 'passive'
-        load_passive
       when 'active'
         load_active
       end
     when 'api'
       load_api
     else
-      puts "unknown plugin type configured #{@config['plugin']['type']}"
-      puts "only 'script', 'container', and 'api' are known"
+      error_logger("unknown plugin type configured #{@config['plugin']['type']}")
+      error_logger("only 'script', 'container', and 'api' are known")
     end
     help_load
   end
@@ -147,59 +144,65 @@ class Plugin
     # Split chat data after @bot plugin into args to pass into plugin.
     # Split args based on qoutes, args are based on spaces unless in qoutes
     chat_text_array = data_from_chat.text.split(/\s(?=(?:[^"]|"[^"]*")*$)/)
-    exec_data = chat_text_array.drop(2) unless @config['plugin']['data_type'] == 'all'
-    exec_data = data_from_chat.to_json if @config['plugin']['data_type'] == 'all'
+    exec_data = @config['plugin']['data_type'] == 'all' ? data_from_chat.to_json : chat_text_array.drop(2)
     case @config['plugin']['type']
     when 'script', 'container'
       case @config['plugin']['listen_type']
       when 'passive'
-        # Will mount the plugins yml file into the container at specified path.
-        # This enable configing the plugin with a single file at both level (SLAPI and Self)
-        unless @config['plugin']['mount_config'].nil?
-          @container_hash['HostConfig'] = { 'Binds' => ["#{Dir.pwd}/config/plugins/#{@name}.yml:#{@config['plugin']['mount_config']}"] }
-        end
-        @container_hash['Cmd'] = exec_data
-        @container = Docker::Container.create(@container_hash)
-        @container.tap(&:start).attach(tty: true)
-        response = @container.logs(stdout: true)
-        @container.delete(force: true)
+        exec_passive(exec_data)
       when 'active'
         @container.exec([exec_data])
       end
     when 'api'
-      # payload = {
-      #   chat:
-      #     {
-      #       user: data_from_chat['user'],
-      #       channel: data_from_chat['channel'],
-      #       type: data_from_chat['type'],
-      #       timestamp: data_from_chat['ts']
-      #     },
-      #   command: {
-      #     # text without username or plugin name
-      #     data: chat_text_array.drop(2)
-      #   }
-      # }
-      # response = HTTParty.get(@config['plugin']['api']['url'], body: payload, headers: @headers)
-      # else ?
-      # Error log and chat?
-      # Since it will only make it to this level if the bot was invoked
-      # then may it is appropriate to state that the bot does not understand?
+      exec_api(data_from_chat, chat_text_array)
     end
+  end
+
+  def exec_passive(exec_data)
+    # Will mount the plugins yml file into the container at specified path.
+    # This enable configing the plugin with a single file at both level (SLAPI and Self)
+    unless @config['plugin']['mount_config'].nil?
+      @container_hash['HostConfig'] = { 'Binds' => ["#{Dir.pwd}/config/plugins/#{@name}.yml:#{@config['plugin']['mount_config']}"] }
+    end
+    @container_hash['Cmd'] = exec_data
+    @container = Docker::Container.create(@container_hash)
+    @container.tap(&:start).attach(tty: true)
+    response = @container.logs(stdout: true)
+    @container.delete(force: true)
     response
   end
+
+  def exec_api(data_from_chat, chat_text_array)
+    payload = {
+      chat:
+        {
+          user: data_from_chat['user'],
+          channel: data_from_chat['channel'],
+          type: data_from_chat['type'],
+          timestamp: data_from_chat['ts']
+        },
+      command: {
+        # text without username or plugin name
+        data: chat_text_array.drop(2)
+      }
+    }
+    HTTParty.get(@config['plugin']['api']['url'], body: payload, headers: @headers)
+    # else ?
+    # Error log and chat?
+    # Since it will only make it to this level if the bot was invoked
+    # then may it is appropriate to state that the bot does not understand?.
+  end
+
 
   # Clears out existing container with the name planned to use
   # Avoids this error:
   # Uncaught exception: Conflict. The name "/hello_world" is already in use by container 23ee03db81c93cb7dd9eba206c3a7e.
-  #      You have to remove (or rename) that container to be able to reuse that name.
+  #      You have to remove (or rename) that container to be able to reuse that name
   def clear_existing_container(name)
     begin
       container = Docker::Container.get(name)
     rescue StandardError => _error
-      # puts "The #{name} container doesn't exist"
-      # puts "#{error.class} was thrown with message #{error.message}"
-      # puts error.inspect
+      debug_logger("Container #{name} does not exist")
       return false
     end
     container&.delete(force: true) if container
@@ -227,12 +230,10 @@ class Plugin
       lang[:file_type] = '.sh'
       lang[:image] = 'slapi/base:latest'
     else
-      # TODO: error logging for this
-      # could also use the langage sent in
+      warn_logger('Language not set in config, defaulting to shell/bash')
       lang[:file_type] = '.sh'
       lang[:image] = 'slapi/base:latest'
     end
     lang
   end
 end
-# end

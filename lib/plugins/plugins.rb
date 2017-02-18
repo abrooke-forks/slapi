@@ -43,10 +43,18 @@ class Plugins
     @help_return
   end
 
-  # Routes the execution to the correct plugin if it exists.
-  # TODO: Write plugin check to verify if plugin exists
+  # Routes the execution to the correct plugin
   def exec(data, requested_plugin = nil)
-    plugin_object = plugin_check(requested_plugin)
-    plugin_object.exec data
+    plugin_object = verify(requested_plugin)
+    plugin_object.exec data if plugin_object
+  end
+
+  # Verifies plugin that's eing executed
+  def verify(requested_plugin)
+    plugin_return = nil
+    @plugin_hash.each do |name, plugin|
+      plugin_return = plugin if name == requested_plugin
+    end
+    plugin_return
   end
 end
