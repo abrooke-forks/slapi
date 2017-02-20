@@ -67,11 +67,11 @@ class Slapi < Sinatra::Base
 
   # Load Brain
   # Utilizes helper from brain/brain
-  @brain = Brain.new
+  @brain = Brain.new(@logger)
 
   # Load Plugins
   # Utilizes Library from plugins/plugins
-  @plugins = Plugins.new
+  @plugins = Plugins.new(@logger)
 
   # Run Slapi Bot/Slack Client
   # Utilizes Library from client/base

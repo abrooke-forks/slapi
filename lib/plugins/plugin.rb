@@ -2,7 +2,7 @@
 
 # Plugin class will represent an individual plugin.
 # It will check the metadata of the type of plugins to make decisions.
-# It's two main functions are to:
+# Its two main functions are to:
 #  1. Load the configuration of the specific plugin and load anything needed for that type.
 #  2. Execute the command properly based on the type
 class Plugin
@@ -14,7 +14,7 @@ class Plugin
     API: 'api'
   }
 
-  def initialize(file)
+  def initialize(logger, file)
     @name = File.basename(file, '.*')
     @config = YAML.load_file(file)
     @lang_settings = lang_settings
@@ -22,6 +22,7 @@ class Plugin
     @container_info = {}
     @api_info = {}
     @container_hash = {}
+    @logger = logger
     load
   end
 

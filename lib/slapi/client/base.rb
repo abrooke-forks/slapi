@@ -4,18 +4,22 @@
 class Slapi
   def self.run
     @client.on :hello do
-      info_logger("Client: Successfully connected, welcome '#{@client.self.name}' to the '#{@client.team.name}' team at https://#{@client.team.domain}.slack.com.")
+      @logger.info("Client: Successfully connected, welcome '#{@client.self.name}' to the '#{@client.team.name}' team at https://#{@client.team.domain}.slack.com.")
     end
 
     @client.on :message do |data|
       case data.text
       when /#{bot_prefix(data)}ping/ then
+        @logger.debug('User requested ping')
         ping(data)
       when /#{bot_prefix(data)}help/ then
+        @logger.debug('User requested help')
         get_help(data)
       when /#{bot_prefix(data)}reload/ then
+        @logger.debug('User requested plugin reload')
         reload(data)
       when /#{bot_prefix(data)}/ then
+        @logger.debug('User request forwarded to check against plugins')
         plugin(data)
       end unless data.user == @client.self.id
     end
@@ -83,6 +87,7 @@ class Slapi
       )
     # If configured, will mute failure response. Good for API Plugins that don't provide responses
     elsif !@bot_options['mute_fail']
+      @logger.debug('User request did not find a matching plugin')
       chat(
         data,
         title: 'Plugin Error',

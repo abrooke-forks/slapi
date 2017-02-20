@@ -21,36 +21,25 @@ module Sinatra
         # @option attachments [String] :title
         # @option attachments [String] :title_link
         # @option attachments [String] :text
-        # @option attachments [String] :color ('#7CD197') defaults to green if not specified
+        # @option attachments [String] :color ('#F7DC6F') defaults to green if not specified
         # @return [String] the resulting webpage
         slapi.post '/v1/attachment' do
           raise 'missing channel' unless params[:channel]
           raise 'missing text' unless params[:text]
           raise 'missing fallback' unless params[:attachments][:fallback]
-          raise 'missing pretext' unless params[:attachments][:pretext]
           raise 'missing title' unless params[:attachments][:title]
-          raise 'missing title_link' unless params[:attachments][:title_link]
-
-          @logger.debug('attach was called')
-          @client.chat_postMessage(
-            channel: params[:channel],
-            text: params[:text],
-            # TODO: test the falsiness here
-            as_user: params[:as_user] ? params[:as_user] : true,
-            attachments: [
-              {
-                fallback: params[:attachments][:fallback],
-                pretext: params[:attachments][:pretext],
-                title: params[:attachments][:title],
-                title_link: params[:attachments][:title_link],
-                text: params[:attachments][:text],
-                color: params[:attachments][:color] ? params[:attachments][:color] : '#F7DC6F'
-              }
-            ].to_json
+          channel = params[:channel]
+          slapi.chat_attachment(
+            nil,
+            channel,
+            pretext: params[:attachments][:pretext],
+            fallback: params[:attachments][:fallback],
+            title: params[:attachments][:title],
+            title_link: params[:attachments][:title_link]
+            text: params[:attachments][:text],
+            color: params[:attachments][:color] ? params[:attachments][:color] : '#F7DC6F'
           )
-          @logger.debug('attached to room')
           status 200
-
           { 'message' => 'yes, it worked' }.to_json
         end
 
@@ -66,11 +55,13 @@ module Sinatra
           raise 'missing channel' unless params[:channel]
           raise 'missing text' unless params[:text]
 
-          @logger.debug('emote was called')
-          # interestingly... this did not work with name of room, only ID
-          @client.chat_meMessage(channel: params[:channel],
-                                text: params[:text])
-          @logger.debug('posted to room')
+          channel = params[:channel]
+          text = params[:attachments][:text]
+          slapi.chat_me(
+            nil,
+            channel,
+            text
+          )
           status 200
           { 'message' => 'yes, it worked' }.to_json
         end
@@ -88,11 +79,13 @@ module Sinatra
           raise 'missing channel' unless params[:channel]
           raise 'missing text' unless params[:text]
 
-          @logger.debug('speak was called')
-          @client.chat_postMessage(channel: params[:channel],
-                                  text: params[:text],
-                                  as_user: params[:as_user] ? params[:as_user] : true)
-          @logger.debug('posted to room')
+          channel = params[:channel]
+          text = params[:attachments][:text]
+          slapi.chat(
+            nil,
+            channel,
+            text
+          )
           { 'message' => 'yes, it worked' }.to_json
         end
       end

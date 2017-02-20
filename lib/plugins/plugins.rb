@@ -3,7 +3,7 @@
 require_relative 'plugin'
 
 # Plugins class will act as a cache of the plugins currently loaded.
-# It's two main functions are to:
+# Its two main functions are to:
 #  1. Load the configuration of all plugins
 #  2. Route the execution to the right plugin
 class Plugins

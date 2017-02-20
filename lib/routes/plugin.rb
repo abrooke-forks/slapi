@@ -6,7 +6,7 @@ module Sinatra
     module Plugin
       def self.registered(slapi)
         slapi.post '/reload' do
-          slapi.plugins
+          slapi.reload_plugins
         end
       end
     end
