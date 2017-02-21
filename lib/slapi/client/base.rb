@@ -1,25 +1,28 @@
 # frozen_string_literal: true
 
-# Basic Client setup
+# Base Client for Slapi Class
+# Its main functions are to:
+#  1. Start the Bot
+#     - Set listeners and which helpers to utilize
 class Slapi
   def self.run
     @client.on :hello do
-      @logger.info("Client: Successfully connected, welcome '#{@client.self.name}' to the '#{@client.team.name}' team at https://#{@client.team.domain}.slack.com.")
+      @logger.info("Slapi: Successfully connected, welcome '#{@client.self.name}' to the '#{@client.team.name}' team at https://#{@client.team.domain}.slack.com.")
     end
 
     @client.on :message do |data|
       case data.text
       when /#{bot_prefix(data)}ping/ then
-        @logger.debug('User requested ping')
+        @logger.debug("Slapi: #{data.user} requested ping")
         ping(data)
       when /#{bot_prefix(data)}help/ then
-        @logger.debug('User requested help')
+        @logger.debug("Slapi: #{data.user} requested help")
         get_help(data)
       when /#{bot_prefix(data)}reload/ then
-        @logger.debug('User requested plugin reload')
+        @logger.debug("Slapi: #{data.user} requested plugin reload")
         reload(data)
       when /#{bot_prefix(data)}/ then
-        @logger.debug('User request forwarded to check against plugins')
+        @logger.debug("Slapi: #{data.user} request forwarded to check against plugins")
         plugin(data)
       end unless data.user == @client.self.id
     end
@@ -40,7 +43,7 @@ class Slapi
     unless (data.text.include? "#{bot_prefix(data)}help ") || (@help_options['level'] == 2)
       help_text = "Please use `@#{@bot_name} help plugin_name` for specific info"
     end
-    if help_list(data)
+    if help_verify(data)
       chat(
         data,
         pretext: help_text,
@@ -77,7 +80,7 @@ class Slapi
   end
 
   def self.plugin(data)
-    if exec(data)
+    if verify(data)
       chat(
         data,
         title: "Plugin: #{requested_plugin(data)}",
@@ -87,7 +90,7 @@ class Slapi
       )
     # If configured, will mute failure response. Good for API Plugins that don't provide responses
     elsif !@bot_options['mute_fail']
-      @logger.debug('User request did not find a matching plugin')
+      @logger.debug("Slapi: No matching plugin for #{data.user} request")
       chat(
         data,
         title: 'Plugin Error',
@@ -98,4 +101,3 @@ class Slapi
     end
   end
 end
-# end

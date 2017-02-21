@@ -6,7 +6,6 @@ require 'logger'
 require 'json'
 require 'yaml'
 require 'docker'
-require 'redis'
 require 'httparty'
 require 'slack-ruby-client'
 
@@ -15,7 +14,19 @@ require_relative 'routes/plugin'
 require_relative 'routes/chat'
 require_relative 'routes/brain'
 
-# Initial Bot Config
+# Slapi Class - Primary Class
+# Its main functions are to:
+#  1. Set Sinatra Environment/Config
+#     - configs loaded from ./config folder
+#     - bot config has bot.local.yml then bot.yml preference
+#  2. Set Slack Client Configuration
+#     - Token is read in bot.local.yml/bot.yml
+#  3. Creates Brain Instance
+#     - lib/brain/redis.rb
+#  4. Create Plugins Instance
+#     - lib/plugins/plugins.rb
+#  5. Starts Bot
+#     - lib/slapi/client/base.rb
 class Slapi < Sinatra::Base
 
   # Load Extended Class items
@@ -42,7 +53,6 @@ class Slapi < Sinatra::Base
   register Sinatra::SlapiRoutes::Chat
   register Sinatra::SlapiRoutes::Brain
 
-  # TODO: Log to files?
   @logger = Logger.new(STDOUT)
   @logger.level = settings.logger_level
 
@@ -51,10 +61,11 @@ class Slapi < Sinatra::Base
 
   # set :environment, :production
 
-  debug_logger("current environment is set to: #{settings.environment}")
+  @logger.debug("Slapi: Current environment is set to: #{settings.environment}")
 
   @help_options = settings.help || {}
   @admin_options = settings.admin || {}
+  @bot_options = settings.bot || {}
 
   # Setup Realtime Client
   Slack.configure do |config|
@@ -67,11 +78,11 @@ class Slapi < Sinatra::Base
 
   # Load Brain
   # Utilizes helper from brain/brain
-  @brain = Brain.new(@logger)
+  @brain = Brain.new(settings)
 
   # Load Plugins
   # Utilizes Library from plugins/plugins
-  @plugins = Plugins.new(@logger)
+  @plugins = Plugins.new(settings)
 
   # Run Slapi Bot/Slack Client
   # Utilizes Library from client/base

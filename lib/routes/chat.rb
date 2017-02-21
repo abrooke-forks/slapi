@@ -1,10 +1,14 @@
 # frozen_string_literal: true
 require 'sinatra'
 
-# Extend Slapi class
 module Sinatra
   module SlapiRoutes
-    # Sinatra Extension that adds routes to accces Slapi Chat Client
+    # Sinatra Extension for Chat Access
+    # Its main functions are to:
+    #  1. Route Messages to Client
+    #     - Standard Text Chat
+    #     - Emote Chat
+    #     - Attachment Chat
     module Chat
       def self.registered(slapi)
         # Handles a POST request for '/v1/attachment'
@@ -35,7 +39,7 @@ module Sinatra
             pretext: params[:attachments][:pretext],
             fallback: params[:attachments][:fallback],
             title: params[:attachments][:title],
-            title_link: params[:attachments][:title_link]
+            title_link: params[:attachments][:title_link],
             text: params[:attachments][:text],
             color: params[:attachments][:color] ? params[:attachments][:color] : '#F7DC6F'
           )
@@ -86,6 +90,7 @@ module Sinatra
             channel,
             text
           )
+          status 200
           { 'message' => 'yes, it worked' }.to_json
         end
       end

@@ -1,5 +1,10 @@
 # frozen_string_literal: true
 
+require 'httparty'
+require 'logger'
+require 'json'
+require 'yaml'
+require 'docker'
 require_relative 'plugin'
 
 # Plugins class will act as a cache of the plugins currently loaded.
@@ -10,8 +15,14 @@ class Plugins
 
   attr_reader :plugin_hash
 
-  def initialize
+  def initialize(settings)
     @plugin_hash = {}
+    @settings = settings
+    @help_options = settings.help || {}
+    @admin_options = settings.admin || {}
+    @bot_options = settings.bot || {}
+    @logger = Logger.new(STDOUT)
+    @logger.level = settings.logger_level
     load
   end
 
@@ -24,20 +35,18 @@ class Plugins
   def load
     yaml_files = File.expand_path('../../config/plugins/*.yml', File.dirname(__FILE__))
     Dir.glob(yaml_files).each do |file|
-      @plugin_hash[File.basename(file, '.*')] = Plugin.new(file)
+      @plugin_hash[File.basename(file, '.*')] = Plugin.new(file, @settings)
     end
   end
 
   # Routes the execution to the correct plugin if it exists.
-  def help_list(help_options, requested_plugin = nil)
+  def help_list(requested_plugin = nil)
     @help_return = ''
     if requested_plugin
-      plugin_object = @plugin_hash[requested_plugin]
-      puts plugin_object
-      @help_return += requested_plugin + ':' + "\n" + plugin_object.help
+      @help_return += requested_plugin + ':' + "\n" + @plugin_hash[requested_plugin].help
     else
       @plugin_hash.each do |name, plugin|
-        @help_return += help_options['level'] == 1 ? name + "\n" : name + ':' + "\n" + plugin.help
+        @help_return += @help_options['level'] == 1 ? name + "\n" : name + ':' + "\n" + plugin.help
       end
     end
     @help_return
@@ -45,16 +54,11 @@ class Plugins
 
   # Routes the execution to the correct plugin
   def exec(data, requested_plugin = nil)
-    plugin_object = verify(requested_plugin)
-    plugin_object.exec data if plugin_object
+    @plugin_hash[requested_plugin]&.exec data
   end
 
   # Verifies plugin that's eing executed
   def verify(requested_plugin)
-    plugin_return = nil
-    @plugin_hash.each do |name, plugin|
-      plugin_return = plugin if name == requested_plugin
-    end
-    plugin_return
+    @plugin_hash[requested_plugin]
   end
 end

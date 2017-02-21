@@ -19,7 +19,6 @@ services:
     environment:
         # Add the dind_host to the /etc/hosts file, docker is set below
         DOCKER_URL: 'docker:2375'
-        # REDIS_URL: 'redis://brain:6379'
     volumes:
         - scripts:/usr/src/slapi/scripts:rw
         - ./config:/usr/src/slapi/config/
@@ -30,20 +29,9 @@ services:
     # Set docker as static dind_host ip so DOCKER_URL can be utilzied by bot for plugins
     extra_hosts:
         - "docker:172.16.238.2"
-        # - "brain:172.16.238.4"
     depends_on:
         - dind_host
-#         - brain
-#     # Place holder for Brain Setup
-#   brain:
-#     image: redis:3-alpine
-#     ports:
-#         - "6379:6379"
-#     networks:
-#         slapi-net:
-#             ipv4_address: 172.16.238.4
-#     depends_on:
-#         - dind_host
+
 
 # Create a volume to attach to both dind_host and bot so scripts written by bot can be attached to plugin containers
 volumes:

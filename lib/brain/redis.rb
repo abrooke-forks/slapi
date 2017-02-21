@@ -1,7 +1,29 @@
 # frozen_string_literal: true
+require 'socket'
+require 'logger'
+require 'json'
+require 'yaml'
+require 'docker'
+require 'redis'
 
-# Slapi Brain
+# Brain Class
+# Its main functions are to:
+#  1. Create Redis Container
+#     - Local Docker Install or DIND depending on Setup
+#     - Validates if a previous container is running and replaces it
+#     - Mounts Path to DIND Host or Localhost for Redis AOF file (Data Persistance)
+#  2. Create Redis Client Access
+#     - URL For Redis determined by IP Comparison (Checking for Compose Environment)
+#  3. Enables Access to Brain
+#     - Query brain for specific key (i.e. Plugin User)
+#     - Query brain for specific hash (i.e. Plugin)
+#     - Delete Key from Brain (i.e. Plugin User)
+#     - Save Key/Value to Brain (i.e. Plugin User Bob )
 class Brain
+  def initialize(settings)
+    @logger = Logger.new(STDOUT)
+    @logger.level = settings.logger_level
+  end
 
   def brain
     brain_check('slapi_brain')
@@ -36,27 +58,33 @@ class Brain
 
   def query_key(hash_name, key)
     query = @redis.hmget(hash_name, key)
-    debug_logger("Key retrieved for #{hash_name}")
+    @logger.debug("Key retrieved for #{hash_name}")
     query
   end
 
   def query_hash(hash_name)
     @redis.hkeys(hash_name)
-    debug_logger("Hash retrieved for #{hash_name}")
+    @logger.debug("Hash retrieved for #{hash_name}")
   end
 
   def delete(hash_name, key)
     @redis.hdel(hash_name, key)
-    debug_logger("Data deleted for #{hash_name}")
+    @logger.debug("Data deleted for #{hash_name}")
   end
 
   def save(hash_name, key, value)
     @redis.hmset(hash_name, key, value)
-    debug_logger("Data saved for #{hash_name}")
+    @logger.debug("Data saved for #{hash_name}")
   end
 
   def set_url
-    @brain_url = File.readlines('/etc/hosts').grep(/brain/).any? ? 'redis://brain:6379' : 'redis://127.0.0.1:6379'
-  end
+    # Pull local IP and Brain Contianer IP
+    ip = Socket.ip_address_list.detect(&:ipv4_private?).ip_address
+    container_ip = @container.info['NetworkSettings']['IPAddress']
 
+    # Determine if running via DIND/Compose Config or if running local
+    compose_bot = false unless ip.rpartition('.')[0] == container_ip.rpartition('.')[0]
+    # If Compose, set docker network ip. If, local use localhost
+    @brain_url = compose_bot ? "redis://#{ip}:6379" : 'redis://127.0.0.1:6379'
+  end
 end

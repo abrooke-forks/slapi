@@ -1,4 +1,10 @@
 # frozen_string_literal: true
+require 'httparty'
+require 'logger'
+require 'json'
+require 'yaml'
+require 'docker'
+require_relative 'helpers/language'
 
 # Plugin class will represent an individual plugin.
 # It will check the metadata of the type of plugins to make decisions.
@@ -14,16 +20,18 @@ class Plugin
     API: 'api'
   }
 
-  def initialize(logger, file)
+  def initialize(file, settings)
+    @logger = Logger.new(STDOUT)
+    @logger.level = settings.logger_level
     @name = File.basename(file, '.*')
     @config = YAML.load_file(file)
-    @lang_settings = lang_settings
     @container = nil
-    @container_info = {}
-    @api_info = {}
     @container_hash = {}
-    @logger = logger
+    @container_hash['name'] = @name
+    @container_hash['HostConfig'] = {}
+    @api_info = {}
     load
+    @logger.debug("Plugin: #{@name}: Succesfully Loaded")
   end
 
   # Keeping DRY, all repetive load tasks go here.
@@ -32,19 +40,13 @@ class Plugin
     case @config['plugin']['type']
     when 'script'
       @image = Docker::Image.create(fromImage: @lang_settings[:image])
-      @container_hash = {
-        'name' => @name,
-        'Image' => @lang_settings[:image],
-        'HostConfig' => {
-          'Binds' => ["#{Dir.pwd}/scripts/#{filename}:/scripts/#{filename}"]
-        },
-        'Entrypoint' => "/scripts/#{filename}",
-        'Tty' => true
-      }
+      @container_hash['image'] = @lang_settings[:image]
+      @container_hash['HostConfig']['Binds'] = ["#{Dir.pwd}/scripts/#{filename}:/scripts/#{filename}"]
+      @container_hash['Entrypoint'] = "/scripts/#{filename}"
+      @container_hash['Tty'] = true
       @container_hash['Labels'] = @config['plugin']['help']
     when 'container'
       @image = Docker::Image.create(fromImage: @config['plugin']['config']['Image'])
-      @container_hash['name'] = @name
       @container_hash['Entrypoint'] = @image.info['Config']['Entrypoint']
       @container_hash['WorkingDir'] = @image.info['Config']['WorkingDir']
       @container_hash['Labels'] = @image.info['Config']['Labels']
@@ -58,12 +60,7 @@ class Plugin
     File.open("scripts/#{filename}", 'w') do |file|
       file.write(@config['plugin']['write'])
     end
-    File.chmod(0777, "scripts/#{filename}")
-  end
-
-  def load_passive
-    # placeholder
-    nil
+    File.chmod(0o777, "scripts/#{filename}")
   end
 
   def load_active
@@ -80,6 +77,7 @@ class Plugin
       'Content-Type' => @config['plugin']['api']['content_type'],
       'Authorization' => @config['plugin']['api']['auth']
     }
+    @api_info = HTTParty.get("#{@config['plugin']['api']['url']}/info", headers: @headers)
   end
 
   # Load the plugin configuration.
@@ -89,6 +87,7 @@ class Plugin
   def load
     case @config['plugin']['type']
     when 'script'
+      @lang_settings = lang_settings
       filename = "#{@name}#{@lang_settings[:file_type]}"
       load_docker(filename)
       write_script(filename)
@@ -104,8 +103,8 @@ class Plugin
     when 'api'
       load_api
     else
-      error_logger("unknown plugin type configured #{@config['plugin']['type']}")
-      error_logger("only 'script', 'container', and 'api' are known")
+      @logger.error("Plugin: #{@name}: unknown plugin type configured #{@config['plugin']['type']}")
+      @logger.error("Plugin: #{@name}: only 'script', 'container', and 'api' are known")
     end
     help_load
   end
@@ -187,13 +186,12 @@ class Plugin
         data: chat_text_array.drop(2)
       }
     }
-    HTTParty.get(@config['plugin']['api']['url'], body: payload, headers: @headers)
+    HTTParty.post(@config['plugin']['api']['url'], body: payload, headers: @headers)
     # else ?
     # Error log and chat?
     # Since it will only make it to this level if the bot was invoked
     # then may it is appropriate to state that the bot does not understand?.
   end
-
 
   # Clears out existing container with the name planned to use
   # Avoids this error:
@@ -203,7 +201,7 @@ class Plugin
     begin
       container = Docker::Container.get(name)
     rescue StandardError => _error
-      debug_logger("Container #{name} does not exist")
+      @logger.debug("Plugin: #{@name}: No exisiting container")
       return false
     end
     container&.delete(force: true) if container
@@ -212,29 +210,5 @@ class Plugin
   # Shutdown procedures for container and script plugins
   def shutdown(name)
     clear_existing_container(name)
-  end
-
-  # TODO: likely move to a helper class
-  def lang_settings
-    lang = {}
-    case @config['plugin']['language']
-    when 'ruby', 'rb'
-      lang[:file_type] = '.rb'
-      lang[:image] = 'slapi/ruby:latest'
-    when 'python', 'py'
-      lang[:file_type] = '.py'
-      lang[:image] = 'slapi/python:latest'
-    when 'node', 'nodejs', 'javascript', 'js'
-      lang[:file_type] = '.js'
-      lang[:image] = 'slapi/nodejs:latest'
-    when 'bash', 'shell'
-      lang[:file_type] = '.sh'
-      lang[:image] = 'slapi/base:latest'
-    else
-      warn_logger('Language not set in config, defaulting to shell/bash')
-      lang[:file_type] = '.sh'
-      lang[:image] = 'slapi/base:latest'
-    end
-    lang
   end
 end

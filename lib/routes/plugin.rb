@@ -1,8 +1,10 @@
 # frozen_string_literal: true
-# require 'sinatra'
-# Handles a POST request for '/reload'
+
 module Sinatra
   module SlapiRoutes
+    # Sinatra Extension for Plugin Access
+    # Its main functions are to:
+    #  1. Allow Reloading of Plugins via API
     module Plugin
       def self.registered(slapi)
         slapi.post '/reload' do
