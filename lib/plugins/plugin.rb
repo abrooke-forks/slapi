@@ -4,7 +4,7 @@ require 'logger'
 require 'json'
 require 'yaml'
 require 'docker'
-require_relative 'helpers/language'
+require_relative 'helpers/docker'
 
 # Plugin class will represent an individual plugin.
 # It will check the metadata of the type of plugins to make decisions.
@@ -39,13 +39,14 @@ class Plugin
     clear_existing_container(@name)
     case @config['plugin']['type']
     when 'script'
+      bind_set('script')
       @image = Docker::Image.create(fromImage: @lang_settings[:image])
       @container_hash['image'] = @lang_settings[:image]
-      @container_hash['HostConfig']['Binds'] = ["#{Dir.pwd}/scripts/#{filename}:/scripts/#{filename}"]
       @container_hash['Entrypoint'] = "/scripts/#{filename}"
       @container_hash['Tty'] = true
       @container_hash['Labels'] = @config['plugin']['help']
     when 'container'
+      bind_set
       @image = Docker::Image.create(fromImage: @config['plugin']['config']['Image'])
       @container_hash['Entrypoint'] = @image.info['Config']['Entrypoint']
       @container_hash['WorkingDir'] = @image.info['Config']['WorkingDir']
@@ -64,9 +65,6 @@ class Plugin
   end
 
   def load_active
-    unless @config['plugin']['mount_config'].nil?
-      @config['plugin']['config']['HostConfig']['Binds'] = ["#{Dir.pwd}/config/plugins/#{@name}.yml:#{@config['plugin']['mount_config']}"]
-    end
     @container = Docker::Container.create(@container_hash)
     @container.start
     @container_info = @container.info
@@ -74,10 +72,11 @@ class Plugin
 
   def load_api
     @headers = {
-      'Content-Type' => @config['plugin']['api']['content_type'],
-      'Authorization' => @config['plugin']['api']['auth']
+      'Content-Type' => @config['plugin']['api']['content_type']
+      # 'Authorization' => @config['plugin']['api']['auth']
     }
-    @api_info = HTTParty.get("#{@config['plugin']['api']['url']}/info", headers: @headers)
+    # @api_url = Magic here to decided in API plugin is local or external
+    @api_info = HTTParty.get("#{@api_url}/info", headers: @headers)
   end
 
   # Load the plugin configuration.
@@ -91,8 +90,6 @@ class Plugin
       filename = "#{@name}#{@lang_settings[:file_type]}"
       load_docker(filename)
       write_script(filename)
-      # NOTE: The use of hash rockets is intentional
-      # see: https://github.com/swipely/docker-api/issues/360 and https://github.com/swipely/docker-api/pull/365
     when 'container'
       # load the docker container set in the config
       load_docker
@@ -159,11 +156,6 @@ class Plugin
   end
 
   def exec_passive(exec_data)
-    # Will mount the plugins yml file into the container at specified path.
-    # This enable configing the plugin with a single file at both level (SLAPI and Self)
-    unless @config['plugin']['mount_config'].nil?
-      @container_hash['HostConfig'] = { 'Binds' => ["#{Dir.pwd}/config/plugins/#{@name}.yml:#{@config['plugin']['mount_config']}"] }
-    end
     @container_hash['Cmd'] = exec_data
     @container = Docker::Container.create(@container_hash)
     @container.tap(&:start).attach(tty: true)
