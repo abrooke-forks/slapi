@@ -4,7 +4,6 @@ require 'logger'
 require 'json'
 require 'yaml'
 require 'docker'
-require_relative 'helpers/docker'
 
 # Plugin class will represent an individual plugin.
 # It will check the metadata of the type of plugins to make decisions.
@@ -12,6 +11,7 @@ require_relative 'helpers/docker'
 #  1. Load the configuration of the specific plugin and load anything needed for that type.
 #  2. Execute the command properly based on the type
 class Plugin
+  require_relative 'helpers/docker'
   # TODO: likely this type of numberic enum is not the right route and symbols should be used.
   # however I like the idea of the list being bound by possibilities.
   _type_enum = {
@@ -26,9 +26,7 @@ class Plugin
     @name = File.basename(file, '.*')
     @config = YAML.load_file(file)
     @container = nil
-    @container_hash = {}
-    @container_hash['name'] = @name
-    @container_hash['HostConfig'] = {}
+    @container_hash = { name: @name, HostConfig: {} }
     @api_info = {}
     load
     @logger.debug("Plugin: #{@name}: Succesfully Loaded")
@@ -39,18 +37,16 @@ class Plugin
     clear_existing_container(@name)
     case @config['plugin']['type']
     when 'script'
-      bind_set('script')
       @image = Docker::Image.create(fromImage: @lang_settings[:image])
       @container_hash['image'] = @lang_settings[:image]
+      @container_hash['HostConfig']['Binds'] = bind_set(filename, 'script')
       @container_hash['Entrypoint'] = "/scripts/#{filename}"
       @container_hash['Tty'] = true
       @container_hash['Labels'] = @config['plugin']['help']
     when 'container'
-      bind_set
       @image = Docker::Image.create(fromImage: @config['plugin']['config']['Image'])
-      @container_hash['Entrypoint'] = @image.info['Config']['Entrypoint']
-      @container_hash['WorkingDir'] = @image.info['Config']['WorkingDir']
-      @container_hash['Labels'] = @image.info['Config']['Labels']
+      @container_hash.merge(@image.info['Config'])
+      @container_hash['HostConfig']['Binds'] = bind_set
       @config['plugin']['config'].each do |key, value|
         @container_hash[key] = value
       end

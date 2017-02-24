@@ -51,28 +51,25 @@ class Slapi
 
   def self.requested_plugin(data)
     if data.text.include? ' '
-      requested_plugin = chat_data_sort(data)
+      chat_data_sort(data)
     elsif data.text.exclude? @client.self.id
       @logger.debug('Slapi: Plugin called without args from DM')
-      requested_plugin = data.text
+      data.text
     else
       @logger.debug('Slapi: No matches found, no plugin requested')
-      requested_plugin = null
+      nil
     end
-    requested_plugin
   end
 
   def self.chat_data_sort(data)
     # Create array based on spaces
     data_array = data.text.split(' ')
     if data.text.include? 'help'
-      @logger.debug('Slapi: Checking if help request includes a plugin')
       requested_plugin = data.channel[0] == 'D' ? data_array[1] : data_array[2]
-      @logger.debug("Slapi: Help requested for #{requested_plugin}") if requested_plugin
+      @logger.debug("Slapi: Help requested for: #{requested_plugin ? requested_plugin : 'no plugin requested'}")
     else
-      @logger.debug('Slapi: Checking if bot call has a requested plugin')
       requested_plugin = data.channel[0] == 'D' ? data_array[0] : data_array[1]
-      @logger.debug("Slapi: Requested #{requested_plugin}") if requested_plugin
+      @logger.debug("Slapi: Plugin Requested: #{requested_plugin ? requested_plugin : 'no plugin requested'}")
     end
     requested_plugin
   end

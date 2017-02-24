@@ -8,35 +8,18 @@
 #  2. Set Script Language based on plugin config
 #     - Language determines which image is pulled for script exec
 class Plugin
-  def bind_set(type = nil)
+  def bind_set(filename = nil, type = nil)
+    @binds = []
+    @logger.debug("Plugin: #{@name}: Setting Binds")
     if type == 'script'
-      if @config['plugin']['mount_config'].nil?
-        @container_hash['HostConfig']['Binds'] =
-          [
-            "#{Dir.pwd}/scripts/#{filename}:/scripts/#{filename}"
-          ]
-        @logger.debug("Plugin: #{@name}: Script Type Plugin; No Config Bind")
-      else
-        # Will mount the plugins yml file into the container at specified path.
-        # This enable configing the plugin with a single file at both level (SLAPI and Self)
-        @container_hash['HostConfig']['Binds'] =
-          [
-            "#{Dir.pwd}/scripts/#{filename}:/scripts/#{filename}",
-            "#{Dir.pwd}/config/plugins/#{@name}.yml:#{@config['plugin']['mount_config']}"
-          ]
-        @logger.debug("Plugin: #{@name}: Script Type Plugin; Config being binded to container at location: #{@config['plugin']['mount_config']}")
-      end
-    elsif !@config['plugin']['mount_config'].nil?
+      @binds.push("#{Dir.pwd}/scripts/#{filename}:/scripts/#{filename}")
+      #@binds.push("#{Dir.pwd}/config/plugins/#{@name}.yml:#{@config['plugin']['mount_config']}") unless @config['plugin']['mount_config'].nil?
+    else
       # Will mount the plugins yml file into the container at specified path.
       # This enable configing the plugin with a single file at both level (SLAPI and Self)
-      @container_hash['HostConfig']['Binds'] =
-        [
-          "#{Dir.pwd}/config/plugins/#{@name}.yml:#{@config['plugin']['mount_config']}"
-        ]
-      @logger.debug("Plugin: #{@name}: Container Type Plugin; Config being binded to container at location: #{@config['plugin']['mount_config']}")
-    else
-      @logger.debug("Plugin: #{@name}: Container Type Plugin; No Config Bind")
+      #@binds.push("#{Dir.pwd}/config/plugins/#{@name}.yml:#{@config['plugin']['mount_config']}") unless @config['plugin']['mount_config'].nil?
     end
+    @binds
   end
 
   def lang_settings

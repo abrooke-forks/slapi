@@ -28,6 +28,9 @@ require_relative 'routes/brain'
 #  5. Starts Bot
 #     - lib/slapi/client/base.rb
 class Slapi < Sinatra::Base
+  GREEN = '#229954'
+  YELLOW = '#F7DC6F'
+  RED = '#A93226'
 
   # Load Extended Class items
   require_relative 'slapi/init'

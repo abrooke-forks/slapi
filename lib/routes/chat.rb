@@ -25,7 +25,7 @@ module Sinatra
         # @option attachments [String] :title
         # @option attachments [String] :title_link
         # @option attachments [String] :text
-        # @option attachments [String] :color ('#F7DC6F') defaults to green if not specified
+        # @option attachments [String] :color ('#229954') defaults to GREEN(constant) if not specified
         # @return [String] the resulting webpage
         slapi.post '/v1/attachment' do
           raise 'missing channel' unless params[:channel]
@@ -41,7 +41,7 @@ module Sinatra
             title: params[:attachments][:title],
             title_link: params[:attachments][:title_link],
             text: params[:attachments][:text],
-            color: params[:attachments][:color] ? params[:attachments][:color] : '#F7DC6F'
+            color: params[:attachments][:color] ? params[:attachments][:color] : GREEN
           )
           status 200
           { 'message' => 'yes, it worked' }.to_json

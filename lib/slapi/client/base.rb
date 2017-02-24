@@ -29,12 +29,20 @@ class Slapi
     @client.start_async
   end
 
+  def start_async
+    if condition
+      @client.start_async
+    else
+      @logger.debug("Hey I'm in test mode")
+    end
+  end
+
   def self.ping(data)
     chat(
       data,
       title: 'Bot Check',
       text: 'PONG',
-      color: '#229954'
+      color: GREEN
     )
   end
 
@@ -50,7 +58,7 @@ class Slapi
         fallback: 'Your help has arrived!',
         title: 'Help List',
         text: help_list(data),
-        color: '#F7DC6F'
+        color: YELLOW
       )
     else
       chat(
@@ -58,7 +66,7 @@ class Slapi
         title: 'Help Error',
         fallback: 'Plugins or Commands not Found!',
         text: "Sorry <@#{data.user}>, I did not find any help commands or plugins to list",
-        color: '#A93226'
+        color: RED
       )
     end
   end
@@ -68,14 +76,14 @@ class Slapi
       data,
       title: 'Plugin Reloader',
       text: 'Plugins are being reloaded, please wait',
-      color: '#F7DC6F'
+      color: YELLOW
     )
     reload_plugins
     chat(
       data,
       title: 'Plugin Reloader',
       text: 'Plugins Reloaded Successfully',
-      color: '#229954'
+      color: GREEN
     )
   end
 
@@ -86,7 +94,7 @@ class Slapi
         title: "Plugin: #{requested_plugin(data)}",
         fallback: 'Plugin Responded',
         text: exec(data),
-        color: '#229954'
+        color: GREEN
       )
     # If configured, will mute failure response. Good for API Plugins that don't provide responses
     elsif !@bot_options['mute_fail']
@@ -96,7 +104,7 @@ class Slapi
         title: 'Plugin Error',
         fallback: 'No Plugin Found!',
         text: "Sorry <@#{data.user}>, I did not understand or find that command.",
-        color: '#A93226'
+        color: RED
       )
     end
   end
