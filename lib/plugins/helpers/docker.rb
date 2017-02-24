@@ -12,11 +12,8 @@ class Plugin
     @binds = []
     @logger.debug("Plugin: #{@name}: Setting Binds")
     if script
-      puts "I has binds #{@binds}"
       @binds.push("#{Dir.pwd}/scripts/#{filename}:/scripts/#{filename}")
-      puts "I has binds #{@binds}"
       @binds.push("#{Dir.pwd}/config/plugins/#{@name}.yml:#{@config['plugin']['mount_config']}") if @config['plugin']['mount_config']
-      puts "I has binds #{@binds}"
     elsif @config['plugin']['mount_config']
       # Will mount the plugins yml file into the container at specified path.
       # This enable configing the plugin with a single file at both level (SLAPI and Self)

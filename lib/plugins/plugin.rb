@@ -39,16 +39,16 @@ class Plugin
     when 'script'
       bind_set(filename, true)
       @image = Docker::Image.create(fromImage: @lang_settings[:image])
-      @container_hash['image'] = @lang_settings[:image]
-      @container_hash['HostConfig']['Binds'] = @binds
-      @container_hash['Entrypoint'] = "/scripts/#{filename}"
-      @container_hash['Tty'] = true
-      @container_hash['Labels'] = @config['plugin']['help']
+      @container_hash[:image] = @lang_settings[:image]
+      @container_hash[:HostConfig][:Binds] = @binds
+      @container_hash[:Entrypoint] = "/scripts/#{filename}"
+      @container_hash[:Tty] = true
+      @container_hash[:Labels] = @config['plugin']['help']
     when 'container'
       bind_set
       @image = Docker::Image.create(fromImage: @config['plugin']['config']['Image'])
       @container_hash.merge(@image.info['Config'])
-      @container_hash['HostConfig']['Binds'] = @binds
+      @container_hash[:HostConfig][:Binds] = @binds
       @config['plugin']['config'].each do |key, value|
         @container_hash[key] = value
       end
@@ -107,8 +107,8 @@ class Plugin
   # Build out help commands for users to query in chat
   def help_load
     @help_list = ''
-    if @container_hash['Labels']
-      @container_hash['Labels'].each do |label, desc|
+    if @container_hash[:Labels]
+      @container_hash[:Labels].each do |label, desc|
         @help_list += '    ' + label + ' : ' + desc + "\n"
       end
     elsif @api_info.key? :Help
@@ -154,7 +154,7 @@ class Plugin
   end
 
   def exec_passive(exec_data)
-    @container_hash['Cmd'] = exec_data
+    @container_hash[:Cmd] = exec_data
     @container = Docker::Container.create(@container_hash)
     @container.tap(&:start).attach(tty: true)
     response = @container.logs(stdout: true)
