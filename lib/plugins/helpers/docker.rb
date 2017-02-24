@@ -8,18 +8,20 @@
 #  2. Set Script Language based on plugin config
 #     - Language determines which image is pulled for script exec
 class Plugin
-  def bind_set(filename = nil, type = nil)
+  def bind_set(filename = nil, script = nil)
     @binds = []
     @logger.debug("Plugin: #{@name}: Setting Binds")
-    if type == 'script'
+    if script
+      puts "I has binds #{@binds}"
       @binds.push("#{Dir.pwd}/scripts/#{filename}:/scripts/#{filename}")
-      #@binds.push("#{Dir.pwd}/config/plugins/#{@name}.yml:#{@config['plugin']['mount_config']}") unless @config['plugin']['mount_config'].nil?
-    else
+      puts "I has binds #{@binds}"
+      @binds.push("#{Dir.pwd}/config/plugins/#{@name}.yml:#{@config['plugin']['mount_config']}") if @config['plugin']['mount_config']
+      puts "I has binds #{@binds}"
+    elsif @config['plugin']['mount_config']
       # Will mount the plugins yml file into the container at specified path.
       # This enable configing the plugin with a single file at both level (SLAPI and Self)
-      #@binds.push("#{Dir.pwd}/config/plugins/#{@name}.yml:#{@config['plugin']['mount_config']}") unless @config['plugin']['mount_config'].nil?
+      @binds.push("#{Dir.pwd}/config/plugins/#{@name}.yml:#{@config['plugin']['mount_config']}")
     end
-    @binds
   end
 
   def lang_settings

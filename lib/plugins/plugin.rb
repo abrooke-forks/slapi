@@ -37,16 +37,18 @@ class Plugin
     clear_existing_container(@name)
     case @config['plugin']['type']
     when 'script'
+      bind_set(filename, true)
       @image = Docker::Image.create(fromImage: @lang_settings[:image])
       @container_hash['image'] = @lang_settings[:image]
-      @container_hash['HostConfig']['Binds'] = bind_set(filename, 'script')
+      @container_hash['HostConfig']['Binds'] = @binds
       @container_hash['Entrypoint'] = "/scripts/#{filename}"
       @container_hash['Tty'] = true
       @container_hash['Labels'] = @config['plugin']['help']
     when 'container'
+      bind_set
       @image = Docker::Image.create(fromImage: @config['plugin']['config']['Image'])
       @container_hash.merge(@image.info['Config'])
-      @container_hash['HostConfig']['Binds'] = bind_set
+      @container_hash['HostConfig']['Binds'] = @binds
       @config['plugin']['config'].each do |key, value|
         @container_hash[key] = value
       end
