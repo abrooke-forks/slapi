@@ -29,14 +29,6 @@ class Slapi
     @client.start_async
   end
 
-  def start_async
-    if condition
-      @client.start_async
-    else
-      @logger.debug("Hey I'm in test mode")
-    end
-  end
-
   def self.ping(data)
     chat(
       data,

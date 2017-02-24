@@ -22,25 +22,18 @@ class Plugin
   end
 
   def lang_settings
-    lang = {}
     case @config['plugin']['language']
     when 'ruby', 'rb'
-      lang[:file_type] = '.rb'
-      lang[:image] = 'slapi/ruby:latest'
+      { file_type: '.rb', image: 'slapi/ruby:latest' }
     when 'python', 'py'
-      lang[:file_type] = '.py'
-      lang[:image] = 'slapi/python:latest'
+      { file_type: '.py', image: 'slapi/python:latest' }
     when 'node', 'nodejs', 'javascript', 'js'
-      lang[:file_type] = '.js'
-      lang[:image] = 'slapi/nodejs:latest'
+      { file_type: '.js', image: 'slapi/nodejs:latest' }
     when 'bash', 'shell'
-      lang[:file_type] = '.sh'
-      lang[:image] = 'slapi/base:latest'
+      { file_type: '.sh', image: 'slapi/base:latest' }
     else
-      lang[:file_type] = '.sh'
-      lang[:image] = 'slapi/base:latest'
       @logger.info("Plugin: #{@name}: Language not set in config, defaulting to shell/bash")
+      { file_type: '.sh', image: 'slapi/base:latest' }
     end
-    lang
   end
 end

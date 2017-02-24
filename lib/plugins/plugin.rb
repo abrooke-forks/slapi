@@ -4,6 +4,7 @@ require 'logger'
 require 'json'
 require 'yaml'
 require 'docker'
+require_relative 'helpers/docker'
 
 # Plugin class will represent an individual plugin.
 # It will check the metadata of the type of plugins to make decisions.
@@ -11,15 +12,6 @@ require 'docker'
 #  1. Load the configuration of the specific plugin and load anything needed for that type.
 #  2. Execute the command properly based on the type
 class Plugin
-  require_relative 'helpers/docker'
-  # TODO: likely this type of numberic enum is not the right route and symbols should be used.
-  # however I like the idea of the list being bound by possibilities.
-  _type_enum = {
-    script: 'script',
-    container: 'container',
-    API: 'api'
-  }
-
   def initialize(file, settings)
     @logger = Logger.new(STDOUT)
     @logger.level = settings.logger_level
