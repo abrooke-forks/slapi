@@ -83,10 +83,7 @@ class Plugin
     when 'container'
       # load the docker container set in the config
       load_docker
-      case @config['plugin']['listen_type']
-      when 'active'
-        load_active
-      end
+      load_active if @config['plugin']['listen_type'] == 'active'
     when 'api'
       load_api
     else
