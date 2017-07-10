@@ -69,6 +69,9 @@ class Bot
     when /#{bot_prefix(data)}reload/ then
       @logger.debug("Slapi: #{data.user} requested plugin reload")
       reload(data)
+    when /#{bot_prefix(data)}secure/ then
+      @logger.debug("Slapi: #{data.user} requested plugin reload")
+      secure(data)
     when /#{bot_prefix(data)}/ then
       @logger.debug("Slapi: #{data.user} request forwarded to check against plugins")
       plugin(data)
@@ -76,6 +79,64 @@ class Bot
   end
 
   private
+
+  Config = Struct.new(:executable, :homedir)
+  def config
+    @config ||=  Config.new("gpg", "~/.gnupg")
+  end
+
+  def gpg_command
+    gpg_command_string
+  end
+
+	def gpg_command_array
+		[
+			config.executable,
+			'--homedir', config.homedir,
+			'--quiet',
+			'--no-secmem-warning',
+			'--no-permission-warning',
+			'--no-tty',
+			'--yes'
+		]
+	end
+
+	def encrypt_string(string, recipient, opts = {})
+		command = gpg_command_array.dup
+		command << '-a' if opts[:armor]
+		command << '--encrypt'
+		command << '--recipient' << recipient
+		run_command(command, string)
+	end
+
+	def decrypt_string(string, passphrase = nil)
+		command = gpg_command_array.dup
+		command << '--passphrase' << passphrase if passphrase
+		command << '--decrypt'
+		run_command(command, string)
+	end
+
+	def run_command(command, input = nil)
+		opts = { binmode: true, stdin_data: input}
+		output, error, status = Open3.capture3(*command, opts)
+		if status.exitstatus != 0
+		raise "GPG command (#{command.join(' ')}) failed with: #{error}"
+		end
+		output
+	end
+
+	def secure(data)
+    @bot_options['keys'].each |x|	  
+    chat_attachment(
+      {
+        title: 'Secure',
+	text: @bot_options['keys'][0]['user'],
+        color: GREEN
+      },
+      nil,
+      data
+    )
+  end
 
   def ping(data)
     chat_attachment(
